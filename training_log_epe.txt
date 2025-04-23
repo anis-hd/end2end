@@ -1,0 +1,414 @@
+2025-04-22 20:30:51 - INFO - ==================== Training Configuration ====================
+2025-04-22 20:30:51 - INFO - accumulation_steps: 2
+2025-04-22 20:30:51 - INFO - batch_size: 1
+2025-04-22 20:30:51 - INFO - checkpoint_dir: ./raft_checkpoints_amp_epe
+2025-04-22 20:30:51 - INFO - clip: 1.0
+2025-04-22 20:30:51 - INFO - dropout: 0.1
+2025-04-22 20:30:51 - INFO - epochs: 600
+2025-04-22 20:30:51 - INFO - final_dir: final/
+2025-04-22 20:30:51 - INFO - flow_dir: flow/
+2025-04-22 20:30:51 - INFO - gpu: 0
+2025-04-22 20:30:51 - INFO - log_file: training_log_epe.txt
+2025-04-22 20:30:51 - INFO - loss_gamma: 0.8
+2025-04-22 20:30:51 - INFO - lr: 0.0001
+2025-04-22 20:30:51 - INFO - mixed_precision: True
+2025-04-22 20:30:51 - INFO - num_workers: 4
+2025-04-22 20:30:51 - INFO - raft_iters: 12
+2025-04-22 20:30:51 - INFO - resize_height: 360
+2025-04-22 20:30:51 - INFO - resize_width: 640
+2025-04-22 20:30:51 - INFO - restore_ckpt: None
+2025-04-22 20:30:51 - INFO - resume: True
+2025-04-22 20:30:51 - INFO - seed: 42
+2025-04-22 20:30:51 - INFO - use_augmentation: True
+2025-04-22 20:30:51 - INFO - vis_dir: ./raft_visualizations_amp_epe
+2025-04-22 20:30:51 - INFO - vis_interval: 200
+2025-04-22 20:30:51 - INFO - visualize_end_of_epoch: True
+2025-04-22 20:30:51 - INFO - visualize_while_training: False
+2025-04-22 20:30:51 - INFO - wdecay: 0.0001
+2025-04-22 20:30:51 - INFO - ==========================================================
+2025-04-22 20:30:51 - INFO - Using device: cuda:0 (CUDA)
+2025-04-22 20:30:51 - INFO - AMP Enabled.
+2025-04-22 20:30:51 - INFO - Set random seed to 42
+2025-04-22 20:30:51 - INFO - DataLoader initialized with 1041 potential samples.
+2025-04-22 20:30:51 - INFO - Attempting torch.compile with mode=reduce-overhead
+2025-04-22 20:30:52 - INFO - torch.compile applied successfully in 0.62s.
+2025-04-22 20:30:52 - INFO - Optimizer: AdamW, Fixed Learning Rate: 0.0001, Weight Decay: 0.0001
+2025-04-22 20:30:52 - INFO - Resume=True, but no checkpoints found in ./raft_checkpoints_amp_epe
+2025-04-22 20:30:52 - INFO - Starting training loop from epoch 1 up to 600
+2025-04-22 20:30:52 - INFO - Effective batch size: 2 (Batch: 1, Accum: 2)
+2025-04-22 20:31:03 - ERROR - Epoch 1 Step 1: Runtime error
+Traceback (most recent call last):
+  File "/home/anis/Desktop/new/tensorflow2pytorch/main.py", line 908, in train
+    scaler.scale(loss_scaled_for_accum).backward()
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/_tensor.py", line 626, in backward
+    torch.autograd.backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/__init__.py", line 347, in backward
+    _engine_run_backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/graph.py", line 823, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Error: accessing tensor output of CUDAGraphs that has been overwritten by a subsequent run. Stack trace: File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 303, in forward
+    motion_features = self.motion_encoder(flow, corr_features)
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 202, in forward
+    corr = self.convcorr1(corr_features). To prevent overwriting, clone the tensor outside of torch.compile() or call torch.compiler.cudagraph_mark_step_begin() before each model invocation.
+2025-04-22 20:31:03 - ERROR - Epoch 1 Step 3: Runtime error
+Traceback (most recent call last):
+  File "/home/anis/Desktop/new/tensorflow2pytorch/main.py", line 908, in train
+    scaler.scale(loss_scaled_for_accum).backward()
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/_tensor.py", line 626, in backward
+    torch.autograd.backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/__init__.py", line 347, in backward
+    _engine_run_backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/graph.py", line 823, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Error: accessing tensor output of CUDAGraphs that has been overwritten by a subsequent run. Stack trace: File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 303, in forward
+    motion_features = self.motion_encoder(flow, corr_features)
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 202, in forward
+    corr = self.convcorr1(corr_features). To prevent overwriting, clone the tensor outside of torch.compile() or call torch.compiler.cudagraph_mark_step_begin() before each model invocation.
+2025-04-22 20:35:27 - INFO - Epoch 1/600 | Time: 275.74s | Avg Loss: 45.0121 | Avg EPE: 9.783 | LR: 0.000100 | Steps: 1039 | Opt Steps: 518
+2025-04-22 20:35:27 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0001.pth
+2025-04-22 20:39:55 - INFO - Epoch 2/600 | Time: 266.83s | Avg Loss: 40.6123 | Avg EPE: 8.717 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 20:39:55 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0002.pth
+2025-04-22 20:44:21 - INFO - Epoch 3/600 | Time: 265.73s | Avg Loss: 32.0106 | Avg EPE: 6.776 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 20:44:21 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0003.pth
+2025-04-22 20:48:46 - INFO - Epoch 4/600 | Time: 264.49s | Avg Loss: 27.3682 | Avg EPE: 5.764 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 20:48:46 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0004.pth
+2025-04-22 20:53:10 - INFO - Epoch 5/600 | Time: 264.04s | Avg Loss: 24.2533 | Avg EPE: 5.061 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 20:53:10 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0005.pth
+2025-04-22 20:57:35 - INFO - Epoch 6/600 | Time: 264.02s | Avg Loss: 22.0532 | Avg EPE: 4.572 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 20:57:35 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0006.pth
+2025-04-22 21:01:59 - INFO - Epoch 7/600 | Time: 263.99s | Avg Loss: 21.0873 | Avg EPE: 4.359 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:01:59 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0007.pth
+2025-04-22 21:06:24 - INFO - Epoch 8/600 | Time: 263.93s | Avg Loss: 19.9939 | Avg EPE: 4.142 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:06:24 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0008.pth
+2025-04-22 21:10:48 - INFO - Epoch 9/600 | Time: 263.91s | Avg Loss: 18.4456 | Avg EPE: 3.820 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:10:48 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0009.pth
+2025-04-22 21:15:12 - INFO - Epoch 10/600 | Time: 263.88s | Avg Loss: 17.3550 | Avg EPE: 3.580 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:15:12 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0010.pth
+2025-04-22 21:19:37 - INFO - Epoch 11/600 | Time: 263.95s | Avg Loss: 16.5782 | Avg EPE: 3.407 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:19:37 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0011.pth
+2025-04-22 21:24:01 - INFO - Epoch 12/600 | Time: 263.83s | Avg Loss: 15.5711 | Avg EPE: 3.177 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:24:01 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0012.pth
+2025-04-22 21:28:25 - INFO - Epoch 13/600 | Time: 263.89s | Avg Loss: 15.0382 | Avg EPE: 3.083 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:28:25 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0013.pth
+2025-04-22 21:32:50 - INFO - Epoch 14/600 | Time: 263.86s | Avg Loss: 14.4007 | Avg EPE: 2.933 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:32:50 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0014.pth
+2025-04-22 21:37:14 - INFO - Epoch 15/600 | Time: 263.90s | Avg Loss: 13.7179 | Avg EPE: 2.796 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:37:14 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0015.pth
+2025-04-22 21:41:38 - INFO - Epoch 16/600 | Time: 263.87s | Avg Loss: 13.3828 | Avg EPE: 2.719 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:41:38 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0016.pth
+2025-04-22 21:46:03 - INFO - Epoch 17/600 | Time: 263.88s | Avg Loss: 12.9648 | Avg EPE: 2.651 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:46:03 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0017.pth
+2025-04-22 21:50:27 - INFO - Epoch 18/600 | Time: 263.87s | Avg Loss: 12.1882 | Avg EPE: 2.481 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:50:27 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0018.pth
+2025-04-22 21:54:51 - INFO - Epoch 19/600 | Time: 263.91s | Avg Loss: 12.0757 | Avg EPE: 2.453 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:54:52 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0019.pth
+2025-04-22 21:59:16 - INFO - Epoch 20/600 | Time: 263.96s | Avg Loss: 11.2238 | Avg EPE: 2.283 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 21:59:16 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0020.pth
+2025-04-22 22:03:40 - INFO - Epoch 21/600 | Time: 264.02s | Avg Loss: 11.4088 | Avg EPE: 2.309 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:03:40 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0021.pth
+2025-04-22 22:08:05 - INFO - Epoch 22/600 | Time: 263.95s | Avg Loss: 10.7766 | Avg EPE: 2.184 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:08:05 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0022.pth
+2025-04-22 22:12:29 - INFO - Epoch 23/600 | Time: 263.88s | Avg Loss: 10.6277 | Avg EPE: 2.173 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:12:29 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0023.pth
+2025-04-22 22:16:53 - INFO - Epoch 24/600 | Time: 263.93s | Avg Loss: 10.6308 | Avg EPE: 2.163 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:16:54 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0024.pth
+2025-04-22 22:21:18 - INFO - Epoch 25/600 | Time: 263.91s | Avg Loss: 9.9633 | Avg EPE: 2.011 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:21:18 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0025.pth
+2025-04-22 22:25:42 - INFO - Epoch 26/600 | Time: 263.84s | Avg Loss: 9.8435 | Avg EPE: 1.992 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:25:42 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0026.pth
+2025-04-22 22:30:06 - INFO - Epoch 27/600 | Time: 263.95s | Avg Loss: 9.7573 | Avg EPE: 1.978 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:30:07 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0027.pth
+2025-04-22 22:34:31 - INFO - Epoch 28/600 | Time: 263.90s | Avg Loss: 9.3169 | Avg EPE: 1.894 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:34:31 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0028.pth
+2025-04-22 22:38:55 - INFO - Epoch 29/600 | Time: 263.87s | Avg Loss: 9.1679 | Avg EPE: 1.858 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:38:55 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0029.pth
+2025-04-22 22:43:19 - INFO - Epoch 30/600 | Time: 263.89s | Avg Loss: 9.0467 | Avg EPE: 1.813 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:43:20 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0030.pth
+2025-04-22 22:47:44 - INFO - Epoch 31/600 | Time: 263.86s | Avg Loss: 8.9934 | Avg EPE: 1.810 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:47:44 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0031.pth
+2025-04-22 22:52:08 - INFO - Epoch 32/600 | Time: 263.86s | Avg Loss: 8.8706 | Avg EPE: 1.779 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:52:08 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0032.pth
+2025-04-22 22:56:32 - INFO - Epoch 33/600 | Time: 263.88s | Avg Loss: 8.7647 | Avg EPE: 1.766 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 22:56:32 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0033.pth
+2025-04-22 23:00:57 - INFO - Epoch 34/600 | Time: 263.89s | Avg Loss: 8.3939 | Avg EPE: 1.691 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:00:57 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0034.pth
+2025-04-22 23:05:21 - INFO - Epoch 35/600 | Time: 263.93s | Avg Loss: 8.4581 | Avg EPE: 1.706 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:05:21 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0035.pth
+2025-04-22 23:09:46 - INFO - Epoch 36/600 | Time: 263.93s | Avg Loss: 8.3192 | Avg EPE: 1.677 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:09:46 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0036.pth
+2025-04-22 23:14:10 - INFO - Epoch 37/600 | Time: 263.88s | Avg Loss: 8.1752 | Avg EPE: 1.652 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:14:10 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0037.pth
+2025-04-22 23:18:34 - INFO - Epoch 38/600 | Time: 263.84s | Avg Loss: 7.7143 | Avg EPE: 1.556 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:18:34 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0038.pth
+2025-04-22 23:22:59 - INFO - Epoch 39/600 | Time: 263.91s | Avg Loss: 8.1524 | Avg EPE: 1.651 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:22:59 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0039.pth
+2025-04-22 23:27:23 - INFO - Epoch 40/600 | Time: 264.01s | Avg Loss: 7.6378 | Avg EPE: 1.541 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:27:23 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0040.pth
+2025-04-22 23:31:48 - INFO - Epoch 41/600 | Time: 264.15s | Avg Loss: 7.5080 | Avg EPE: 1.514 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:31:48 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0041.pth
+2025-04-22 23:36:12 - INFO - Epoch 42/600 | Time: 264.18s | Avg Loss: 7.4157 | Avg EPE: 1.499 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:36:12 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0042.pth
+2025-04-22 23:40:37 - INFO - Epoch 43/600 | Time: 264.20s | Avg Loss: 7.2794 | Avg EPE: 1.467 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:40:37 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0043.pth
+2025-04-22 23:45:01 - INFO - Epoch 44/600 | Time: 264.12s | Avg Loss: 7.0902 | Avg EPE: 1.426 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:45:02 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0044.pth
+2025-04-22 23:49:26 - INFO - Epoch 45/600 | Time: 264.15s | Avg Loss: 7.0068 | Avg EPE: 1.411 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:49:26 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0045.pth
+2025-04-22 23:53:51 - INFO - Epoch 46/600 | Time: 264.14s | Avg Loss: 7.1032 | Avg EPE: 1.433 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:53:51 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0046.pth
+2025-04-22 23:58:15 - INFO - Epoch 47/600 | Time: 264.06s | Avg Loss: 7.0349 | Avg EPE: 1.414 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-22 23:58:15 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0047.pth
+2025-04-23 00:02:40 - INFO - Epoch 48/600 | Time: 264.05s | Avg Loss: 6.9128 | Avg EPE: 1.386 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:02:40 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0048.pth
+2025-04-23 00:07:04 - INFO - Epoch 49/600 | Time: 264.06s | Avg Loss: 6.8202 | Avg EPE: 1.379 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:07:04 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0049.pth
+2025-04-23 00:11:29 - INFO - Epoch 50/600 | Time: 264.05s | Avg Loss: 6.7326 | Avg EPE: 1.358 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:11:29 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0050.pth
+2025-04-23 00:15:53 - INFO - Epoch 51/600 | Time: 264.09s | Avg Loss: 6.7217 | Avg EPE: 1.358 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:15:53 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0051.pth
+2025-04-23 00:20:17 - INFO - Epoch 52/600 | Time: 263.94s | Avg Loss: 6.5933 | Avg EPE: 1.331 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:20:18 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0052.pth
+2025-04-23 00:24:42 - INFO - Epoch 53/600 | Time: 263.97s | Avg Loss: 6.4024 | Avg EPE: 1.290 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:24:42 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0053.pth
+2025-04-23 00:29:07 - INFO - Epoch 54/600 | Time: 263.97s | Avg Loss: 6.2237 | Avg EPE: 1.252 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:29:07 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0054.pth
+2025-04-23 00:33:31 - INFO - Epoch 55/600 | Time: 264.02s | Avg Loss: 6.2782 | Avg EPE: 1.261 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:33:31 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0055.pth
+2025-04-23 00:37:55 - INFO - Epoch 56/600 | Time: 264.10s | Avg Loss: 6.1750 | Avg EPE: 1.246 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:37:56 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0056.pth
+2025-04-23 00:42:20 - INFO - Epoch 57/600 | Time: 264.10s | Avg Loss: 6.0802 | Avg EPE: 1.222 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:42:20 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0057.pth
+2025-04-23 00:46:45 - INFO - Epoch 58/600 | Time: 264.11s | Avg Loss: 6.1085 | Avg EPE: 1.237 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:46:45 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0058.pth
+2025-04-23 00:51:09 - INFO - Epoch 59/600 | Time: 264.09s | Avg Loss: 6.0858 | Avg EPE: 1.227 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:51:09 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0059.pth
+2025-04-23 00:55:34 - INFO - Epoch 60/600 | Time: 264.12s | Avg Loss: 5.9981 | Avg EPE: 1.214 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:55:34 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0060.pth
+2025-04-23 00:59:58 - INFO - Epoch 61/600 | Time: 264.14s | Avg Loss: 5.8938 | Avg EPE: 1.194 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 00:59:58 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0061.pth
+2025-04-23 01:04:23 - INFO - Epoch 62/600 | Time: 264.14s | Avg Loss: 6.1285 | Avg EPE: 1.250 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:04:23 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0062.pth
+2025-04-23 01:08:47 - INFO - Epoch 63/600 | Time: 264.14s | Avg Loss: 5.8146 | Avg EPE: 1.168 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:08:47 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0063.pth
+2025-04-23 01:13:12 - INFO - Epoch 64/600 | Time: 264.09s | Avg Loss: 5.6179 | Avg EPE: 1.133 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:13:12 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0064.pth
+2025-04-23 01:17:36 - INFO - Epoch 65/600 | Time: 264.06s | Avg Loss: 5.6414 | Avg EPE: 1.135 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:17:36 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0065.pth
+2025-04-23 01:22:01 - INFO - Epoch 66/600 | Time: 264.03s | Avg Loss: 5.7531 | Avg EPE: 1.165 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:22:01 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0066.pth
+2025-04-23 01:26:25 - INFO - Epoch 67/600 | Time: 264.05s | Avg Loss: 5.4610 | Avg EPE: 1.097 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:26:25 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0067.pth
+2025-04-23 01:30:50 - INFO - Epoch 68/600 | Time: 264.04s | Avg Loss: 5.4450 | Avg EPE: 1.094 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:30:50 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0068.pth
+2025-04-23 01:35:14 - INFO - Epoch 69/600 | Time: 263.93s | Avg Loss: 5.4232 | Avg EPE: 1.089 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:35:14 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0069.pth
+2025-04-23 01:39:38 - INFO - Epoch 70/600 | Time: 263.90s | Avg Loss: 5.3809 | Avg EPE: 1.085 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:39:39 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0070.pth
+2025-04-23 01:44:03 - INFO - Epoch 71/600 | Time: 263.99s | Avg Loss: 5.3078 | Avg EPE: 1.068 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:44:03 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0071.pth
+2025-04-23 01:48:27 - INFO - Epoch 72/600 | Time: 264.07s | Avg Loss: 5.1774 | Avg EPE: 1.042 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:48:27 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0072.pth
+2025-04-23 01:52:52 - INFO - Epoch 73/600 | Time: 264.04s | Avg Loss: 5.3552 | Avg EPE: 1.080 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:52:52 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0073.pth
+2025-04-23 01:57:17 - INFO - Epoch 74/600 | Time: 264.07s | Avg Loss: 5.3034 | Avg EPE: 1.071 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 01:57:17 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0074.pth
+2025-04-23 02:01:41 - INFO - Epoch 75/600 | Time: 264.11s | Avg Loss: 5.0631 | Avg EPE: 1.020 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:01:41 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0075.pth
+2025-04-23 02:06:06 - INFO - Epoch 76/600 | Time: 264.15s | Avg Loss: 5.1182 | Avg EPE: 1.023 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:06:06 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0076.pth
+2025-04-23 02:10:30 - INFO - Epoch 77/600 | Time: 264.16s | Avg Loss: 5.0720 | Avg EPE: 1.020 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:10:30 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0077.pth
+2025-04-23 02:14:55 - INFO - Epoch 78/600 | Time: 264.05s | Avg Loss: 4.9523 | Avg EPE: 0.991 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:14:55 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0078.pth
+2025-04-23 02:19:19 - INFO - Epoch 79/600 | Time: 264.11s | Avg Loss: 4.8744 | Avg EPE: 0.980 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:19:19 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0079.pth
+2025-04-23 02:23:44 - INFO - Epoch 80/600 | Time: 264.10s | Avg Loss: 4.8431 | Avg EPE: 0.974 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:23:44 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0080.pth
+2025-04-23 02:28:08 - INFO - Epoch 81/600 | Time: 264.12s | Avg Loss: 4.8832 | Avg EPE: 0.984 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:28:08 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0081.pth
+2025-04-23 02:32:33 - INFO - Epoch 82/600 | Time: 264.17s | Avg Loss: 4.7806 | Avg EPE: 0.965 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:32:33 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0082.pth
+2025-04-23 02:36:58 - INFO - Epoch 83/600 | Time: 264.16s | Avg Loss: 4.7824 | Avg EPE: 0.958 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:36:58 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0083.pth
+2025-04-23 02:41:22 - INFO - Epoch 84/600 | Time: 264.09s | Avg Loss: 4.8792 | Avg EPE: 0.990 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:41:22 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0084.pth
+2025-04-23 02:45:47 - INFO - Epoch 85/600 | Time: 264.01s | Avg Loss: 4.6536 | Avg EPE: 0.933 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:45:47 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0085.pth
+2025-04-23 02:50:11 - INFO - Epoch 86/600 | Time: 263.99s | Avg Loss: 4.6670 | Avg EPE: 0.940 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:50:11 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0086.pth
+2025-04-23 02:54:35 - INFO - Epoch 87/600 | Time: 264.00s | Avg Loss: 4.7259 | Avg EPE: 0.953 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:54:36 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0087.pth
+2025-04-23 02:59:00 - INFO - Epoch 88/600 | Time: 264.03s | Avg Loss: 4.5968 | Avg EPE: 0.929 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 02:59:00 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0088.pth
+2025-04-23 03:03:24 - INFO - Epoch 89/600 | Time: 264.04s | Avg Loss: 4.6439 | Avg EPE: 0.934 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 03:03:25 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0089.pth
+2025-04-23 03:07:49 - INFO - Epoch 90/600 | Time: 263.97s | Avg Loss: 4.6829 | Avg EPE: 0.953 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 03:07:49 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0090.pth
+2025-04-23 03:12:13 - INFO - Epoch 91/600 | Time: 264.04s | Avg Loss: 4.5405 | Avg EPE: 0.913 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 03:12:14 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0091.pth
+2025-04-23 03:16:38 - INFO - Epoch 92/600 | Time: 263.96s | Avg Loss: 4.6066 | Avg EPE: 0.924 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 03:16:38 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0092.pth
+2025-04-23 03:20:03 - WARNING - Training interrupted by user.
+2025-04-23 04:31:35 - INFO - ==================== Training Configuration ====================
+2025-04-23 04:31:35 - INFO - accumulation_steps: 2
+2025-04-23 04:31:35 - INFO - batch_size: 1
+2025-04-23 04:31:35 - INFO - checkpoint_dir: ./raft_checkpoints_amp_epe
+2025-04-23 04:31:35 - INFO - clip: 1.0
+2025-04-23 04:31:35 - INFO - dropout: 0.1
+2025-04-23 04:31:35 - INFO - epochs: 600
+2025-04-23 04:31:35 - INFO - final_dir: final/
+2025-04-23 04:31:35 - INFO - flow_dir: flow/
+2025-04-23 04:31:35 - INFO - gpu: 0
+2025-04-23 04:31:35 - INFO - log_file: training_log_epe.txt
+2025-04-23 04:31:35 - INFO - loss_gamma: 0.8
+2025-04-23 04:31:35 - INFO - lr: 0.0001
+2025-04-23 04:31:35 - INFO - mixed_precision: True
+2025-04-23 04:31:35 - INFO - num_workers: 4
+2025-04-23 04:31:35 - INFO - raft_iters: 12
+2025-04-23 04:31:35 - INFO - resize_height: 360
+2025-04-23 04:31:35 - INFO - resize_width: 640
+2025-04-23 04:31:35 - INFO - restore_ckpt: None
+2025-04-23 04:31:35 - INFO - resume: True
+2025-04-23 04:31:35 - INFO - seed: 42
+2025-04-23 04:31:35 - INFO - use_augmentation: True
+2025-04-23 04:31:35 - INFO - vis_dir: ./raft_visualizations_amp_epe
+2025-04-23 04:31:35 - INFO - vis_interval: 200
+2025-04-23 04:31:35 - INFO - visualize_end_of_epoch: True
+2025-04-23 04:31:35 - INFO - visualize_while_training: False
+2025-04-23 04:31:35 - INFO - wdecay: 0.0001
+2025-04-23 04:31:35 - INFO - ==========================================================
+2025-04-23 04:31:35 - INFO - Using device: cuda:0 (CUDA)
+2025-04-23 04:31:35 - INFO - AMP Enabled.
+2025-04-23 04:31:35 - INFO - Set random seed to 42
+2025-04-23 04:31:35 - INFO - DataLoader initialized with 1041 potential samples.
+2025-04-23 04:31:35 - INFO - Attempting torch.compile with mode=reduce-overhead
+2025-04-23 04:31:36 - INFO - torch.compile applied successfully in 0.65s.
+2025-04-23 04:31:36 - INFO - Optimizer: AdamW, Fixed Learning Rate: 0.0001, Weight Decay: 0.0001
+2025-04-23 04:31:36 - INFO - Attempting to resume training from: ./raft_checkpoints_amp_epe/raft_epoch_0092.pth
+2025-04-23 04:31:36 - INFO - Overriding resumed optimizer LR with fixed config LR: 0.0001
+2025-04-23 04:31:36 - INFO - Successfully resumed. Starting epoch 92. Last AvgLoss: 4.606606516682907, Last AvgEPE: 0.9236712900995063
+2025-04-23 04:31:36 - INFO - Starting training loop from epoch 93 up to 600
+2025-04-23 04:31:36 - INFO - Effective batch size: 2 (Batch: 1, Accum: 2)
+2025-04-23 04:31:47 - ERROR - Epoch 93 Step 1: Runtime error
+Traceback (most recent call last):
+  File "/home/anis/Desktop/new/tensorflow2pytorch/main.py", line 908, in train
+    scaler.scale(loss_scaled_for_accum).backward()
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/_tensor.py", line 626, in backward
+    torch.autograd.backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/__init__.py", line 347, in backward
+    _engine_run_backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/graph.py", line 823, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Error: accessing tensor output of CUDAGraphs that has been overwritten by a subsequent run. Stack trace: File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 303, in forward
+    motion_features = self.motion_encoder(flow, corr_features)
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 202, in forward
+    corr = self.convcorr1(corr_features). To prevent overwriting, clone the tensor outside of torch.compile() or call torch.compiler.cudagraph_mark_step_begin() before each model invocation.
+2025-04-23 04:31:48 - ERROR - Epoch 93 Step 3: Runtime error
+Traceback (most recent call last):
+  File "/home/anis/Desktop/new/tensorflow2pytorch/main.py", line 908, in train
+    scaler.scale(loss_scaled_for_accum).backward()
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/_tensor.py", line 626, in backward
+    torch.autograd.backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/__init__.py", line 347, in backward
+    _engine_run_backward(
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torch/autograd/graph.py", line 823, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Error: accessing tensor output of CUDAGraphs that has been overwritten by a subsequent run. Stack trace: File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 303, in forward
+    motion_features = self.motion_encoder(flow, corr_features)
+  File "/home/anis/anaconda3/envs/torch-env/lib/python3.11/site-packages/torchvision/models/optical_flow/raft.py", line 202, in forward
+    corr = self.convcorr1(corr_features). To prevent overwriting, clone the tensor outside of torch.compile() or call torch.compiler.cudagraph_mark_step_begin() before each model invocation.
+2025-04-23 04:36:12 - INFO - Epoch 93/600 | Time: 275.79s | Avg Loss: 4.4969 | Avg EPE: 0.904 | LR: 0.000100 | Steps: 1039 | Opt Steps: 518
+2025-04-23 04:36:12 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0093.pth
+2025-04-23 04:40:39 - INFO - Epoch 94/600 | Time: 266.69s | Avg Loss: 4.4127 | Avg EPE: 0.891 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 04:40:39 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0094.pth
+2025-04-23 04:45:06 - INFO - Epoch 95/600 | Time: 266.18s | Avg Loss: 4.3711 | Avg EPE: 0.879 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 04:45:06 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0095.pth
+2025-04-23 04:49:33 - INFO - Epoch 96/600 | Time: 266.70s | Avg Loss: 4.3030 | Avg EPE: 0.863 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 04:49:33 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0096.pth
+2025-04-23 04:54:00 - INFO - Epoch 97/600 | Time: 266.56s | Avg Loss: 4.3225 | Avg EPE: 0.867 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 04:54:00 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0097.pth
+2025-04-23 04:58:27 - INFO - Epoch 98/600 | Time: 266.88s | Avg Loss: 4.2814 | Avg EPE: 0.862 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 04:58:27 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0098.pth
+2025-04-23 05:02:55 - INFO - Epoch 99/600 | Time: 267.43s | Avg Loss: 4.2340 | Avg EPE: 0.854 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:02:55 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0099.pth
+2025-04-23 05:07:24 - INFO - Epoch 100/600 | Time: 268.11s | Avg Loss: 4.3252 | Avg EPE: 0.872 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:07:24 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0100.pth
+2025-04-23 05:11:53 - INFO - Epoch 101/600 | Time: 268.87s | Avg Loss: 4.2729 | Avg EPE: 0.859 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:11:53 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0101.pth
+2025-04-23 05:16:22 - INFO - Epoch 102/600 | Time: 268.18s | Avg Loss: 4.2220 | Avg EPE: 0.853 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:16:22 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0102.pth
+2025-04-23 05:20:51 - INFO - Epoch 103/600 | Time: 268.36s | Avg Loss: 4.1266 | Avg EPE: 0.825 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:20:51 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0103.pth
+2025-04-23 05:25:21 - INFO - Epoch 104/600 | Time: 269.73s | Avg Loss: 4.1474 | Avg EPE: 0.839 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:25:21 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0104.pth
+2025-04-23 05:29:51 - INFO - Epoch 105/600 | Time: 269.72s | Avg Loss: 4.2639 | Avg EPE: 0.859 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:29:51 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0105.pth
+2025-04-23 05:34:20 - INFO - Epoch 106/600 | Time: 268.12s | Avg Loss: 4.0482 | Avg EPE: 0.812 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:34:20 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0106.pth
+2025-04-23 05:38:48 - INFO - Epoch 107/600 | Time: 268.00s | Avg Loss: 4.1725 | Avg EPE: 0.838 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:38:48 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0107.pth
+2025-04-23 05:43:18 - INFO - Epoch 108/600 | Time: 269.17s | Avg Loss: 4.0227 | Avg EPE: 0.807 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:43:18 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0108.pth
+2025-04-23 05:47:48 - INFO - Epoch 109/600 | Time: 269.50s | Avg Loss: 3.9848 | Avg EPE: 0.796 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:47:48 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0109.pth
+2025-04-23 05:52:18 - INFO - Epoch 110/600 | Time: 269.23s | Avg Loss: 3.9794 | Avg EPE: 0.801 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:52:18 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0110.pth
+2025-04-23 05:56:47 - INFO - Epoch 111/600 | Time: 268.72s | Avg Loss: 4.0730 | Avg EPE: 0.823 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 05:56:47 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0111.pth
+2025-04-23 06:01:13 - INFO - Epoch 112/600 | Time: 265.61s | Avg Loss: 4.0132 | Avg EPE: 0.807 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:01:13 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0112.pth
+2025-04-23 06:05:38 - INFO - Epoch 113/600 | Time: 265.15s | Avg Loss: 4.1154 | Avg EPE: 0.830 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:05:39 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0113.pth
+2025-04-23 06:10:04 - INFO - Epoch 114/600 | Time: 265.03s | Avg Loss: 3.8539 | Avg EPE: 0.775 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:10:04 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0114.pth
+2025-04-23 06:14:29 - INFO - Epoch 115/600 | Time: 265.01s | Avg Loss: 3.8184 | Avg EPE: 0.767 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:14:30 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0115.pth
+2025-04-23 06:18:55 - INFO - Epoch 116/600 | Time: 264.90s | Avg Loss: 3.8758 | Avg EPE: 0.780 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:18:55 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0116.pth
+2025-04-23 06:23:20 - INFO - Epoch 117/600 | Time: 264.95s | Avg Loss: 3.8532 | Avg EPE: 0.775 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:23:20 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0117.pth
+2025-04-23 06:27:46 - INFO - Epoch 118/600 | Time: 264.99s | Avg Loss: 3.7919 | Avg EPE: 0.757 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:27:46 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0118.pth
+2025-04-23 06:32:11 - INFO - Epoch 119/600 | Time: 264.99s | Avg Loss: 3.7155 | Avg EPE: 0.748 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:32:11 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0119.pth
+2025-04-23 06:36:37 - INFO - Epoch 120/600 | Time: 265.04s | Avg Loss: 3.9148 | Avg EPE: 0.788 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:36:37 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0120.pth
+2025-04-23 06:41:02 - INFO - Epoch 121/600 | Time: 265.03s | Avg Loss: 3.7744 | Avg EPE: 0.759 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:41:02 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0121.pth
+2025-04-23 06:45:32 - INFO - Epoch 122/600 | Time: 269.91s | Avg Loss: 3.7990 | Avg EPE: 0.762 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:45:33 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0122.pth
+2025-04-23 06:49:58 - INFO - Epoch 123/600 | Time: 265.30s | Avg Loss: 3.7341 | Avg EPE: 0.748 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:49:58 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0123.pth
+2025-04-23 06:54:24 - INFO - Epoch 124/600 | Time: 265.15s | Avg Loss: 3.9025 | Avg EPE: 0.786 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:54:24 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0124.pth
+2025-04-23 06:58:49 - INFO - Epoch 125/600 | Time: 265.07s | Avg Loss: 3.7899 | Avg EPE: 0.761 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 06:58:49 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0125.pth
+2025-04-23 07:03:15 - INFO - Epoch 126/600 | Time: 265.10s | Avg Loss: 3.6879 | Avg EPE: 0.740 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:03:15 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0126.pth
+2025-04-23 07:07:40 - INFO - Epoch 127/600 | Time: 265.08s | Avg Loss: 3.6324 | Avg EPE: 0.729 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:07:41 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0127.pth
+2025-04-23 07:12:06 - INFO - Epoch 128/600 | Time: 265.14s | Avg Loss: 3.6344 | Avg EPE: 0.732 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:12:06 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0128.pth
+2025-04-23 07:16:32 - INFO - Epoch 129/600 | Time: 265.13s | Avg Loss: 3.6543 | Avg EPE: 0.736 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:16:32 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0129.pth
+2025-04-23 07:20:57 - INFO - Epoch 130/600 | Time: 265.05s | Avg Loss: 3.6815 | Avg EPE: 0.738 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:20:57 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0130.pth
+2025-04-23 07:25:23 - INFO - Epoch 131/600 | Time: 265.10s | Avg Loss: 3.7523 | Avg EPE: 0.753 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:25:23 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0131.pth
+2025-04-23 07:29:48 - INFO - Epoch 132/600 | Time: 265.05s | Avg Loss: 3.6793 | Avg EPE: 0.735 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:29:49 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0132.pth
+2025-04-23 07:34:14 - INFO - Epoch 133/600 | Time: 265.08s | Avg Loss: 3.5615 | Avg EPE: 0.713 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:34:14 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0133.pth
+2025-04-23 07:38:40 - INFO - Epoch 134/600 | Time: 265.13s | Avg Loss: 3.5820 | Avg EPE: 0.716 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:38:40 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0134.pth
+2025-04-23 07:43:05 - INFO - Epoch 135/600 | Time: 265.09s | Avg Loss: 3.5850 | Avg EPE: 0.720 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:43:05 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0135.pth
+2025-04-23 07:47:31 - INFO - Epoch 136/600 | Time: 265.16s | Avg Loss: 3.5985 | Avg EPE: 0.726 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:47:31 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0136.pth
+2025-04-23 07:51:56 - INFO - Epoch 137/600 | Time: 265.38s | Avg Loss: 3.4784 | Avg EPE: 0.696 | LR: 0.000100 | Steps: 1041 | Opt Steps: 520
+2025-04-23 07:51:57 - INFO - Saved checkpoint to ./raft_checkpoints_amp_epe/raft_epoch_0137.pth
+2025-04-23 07:53:18 - WARNING - Training interrupted by user.
