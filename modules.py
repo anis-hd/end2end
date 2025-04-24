@@ -6,7 +6,7 @@ from torch.distributions.normal import Normal
 from torch.distributions import Categorical
 import math
 from torch.autograd import Function
-
+import constriction
 
 # ==============================================================================
 # Helper Modules & Functions
@@ -240,173 +240,242 @@ class VectorQuantizerEMA(nn.Module):
 # Entropy Models
 # ==============================================================================
 
+# --- Entropy Models (Modified for Constriction) ---
+
 class GaussianConditionalEntropyModel(nn.Module):
     """
-    Entropy model based on a conditional Gaussian distribution.
-    Assumes latent variables follow N(mean, scale^2), where mean and scale
-    are predicted by a hyperprior network.
-    Calculates the rate (estimated bits) based on the PDF/CDF.
-    Uses STE quantization noise approximation for rate calculation during training.
+    Entropy model using a conditional Gaussian distribution.
+    MODIFIED to work with external entropy coders like Constriction.
+    Provides necessary distributions/parameters for encoding/decoding.
     """
-    def __init__(self, scale_bound=0.11, likelihood_bound=1e-9):
-        """
-        Args:
-            scale_bound (float): Lower bound for the scale parameter for numerical stability.
-            likelihood_bound (float): Lower bound for likelihoods for numerical stability.
-        """
+    def __init__(self, scale_bound=0.11, likelihood_bound=1e-9, cdf_bound=1e-6):
         super().__init__()
         self.scale_bound = float(scale_bound)
-        self.likelihood_bound = float(likelihood_bound)
-        # Use QuantizerSTE internally for rate estimation during training
-        self.quantizer = QuantizerSTE.apply
+        self.likelihood_bound = float(likelihood_bound) # For rate calculation stability
+        self.cdf_bound = float(cdf_bound) # For entropy coder stability (avoid 0 or 1 CDF values)
+        self.quantizer = QuantizerSTE.apply # Keep for training gradient
 
-    def _likelihood(self, inputs, means, scales):
-        """Calculates the likelihood of inputs under the Gaussian model."""
-        # Ensure scales are bounded for stability
+    def _get_gaussian_params(self, means, scales_raw):
+        """ Calculates clamped means and scales """
+        # Clamp scales for stability during distribution creation AND for entropy coding
+        scales = F.softplus(scales_raw) # Use softplus for positivity
         scales = torch.clamp(scales, min=self.scale_bound)
+        # Means typically don't need clamping unless there are specific range issues
+        return means, scales
 
-        # Create Gaussian distribution object
+    def _get_cdf_endpoints(self, inputs_quantized, means, scales):
+        """ Calculates CDF values needed for arithmetic coding. """
+        # Inputs here are the *quantized integer indices*
+        # We need CDF(x + 0.5) and CDF(x - 0.5)
         dist = Normal(means, scales)
+        upper = inputs_quantized + 0.5
+        lower = inputs_quantized - 0.5
+        cdf_upper = dist.cdf(upper)
+        cdf_lower = dist.cdf(lower)
 
-        # Use STE quantization noise approximation during training
-        # The 'inputs' here should be the *continuous* latents *before* hard quantization
-        if self.training:
-             # Approximate probability mass function P(x) by integrating PDF p(x) over [x-0.5, x+0.5]
-             # P(x) = CDF(x + 0.5) - CDF(x - 0.5)
-             upper = inputs + 0.5
-             lower = inputs - 0.5
-             cdf_upper = dist.cdf(upper)
-             cdf_lower = dist.cdf(lower)
-             likelihood_ = cdf_upper - cdf_lower
-        else:
-             # During inference, we use the actual quantized values (indices)
-             # Need to calculate the probability mass for the specific integer index
-             # 'inputs' in this case should be the integer indices
-             upper = inputs + 0.5
-             lower = inputs - 0.5
-             cdf_upper = dist.cdf(upper)
-             cdf_lower = dist.cdf(lower)
-             likelihood_ = cdf_upper - cdf_lower
+        # Clamp CDF values slightly away from 0 and 1 for numerical stability in entropy coders
+        cdf_upper = torch.clamp(cdf_upper, self.cdf_bound, 1.0 - self.cdf_bound)
+        cdf_lower = torch.clamp(cdf_lower, self.cdf_bound, 1.0 - self.cdf_bound)
 
-        # Bound likelihoods away from zero for numerical stability with log
-        likelihood_ = torch.clamp(likelihood_, min=self.likelihood_bound)
-        return likelihood_
+        # Ensure lower < upper after clamping (important!)
+        # If cdf_lower >= cdf_upper, set upper slightly higher
+        mask = cdf_lower >= cdf_upper
+        cdf_upper = torch.where(mask, cdf_lower + self.cdf_bound * 10, cdf_upper) # Add small gap
 
-    def forward(self, latents, means, scales):
+        return cdf_lower, cdf_upper
+
+    def forward(self, latents, means_pred, scales_pred_raw):
         """
-        Calculates rate and provides quantized values for the decoder.
+        Forward pass during TRAINING. Quantizes and calculates rate estimate.
 
         Args:
             latents (torch.Tensor): Continuous latent variables from the encoder.
-            means (torch.Tensor): Predicted means from the hyper-decoder.
-            scales (torch.Tensor): Predicted scales from the hyper-decoder.
+            means_pred (torch.Tensor): Predicted means from the hyper-decoder.
+            scales_pred_raw (torch.Tensor): Predicted raw scales from the hyper-decoder.
 
         Returns:
             tuple:
-                - quantized_latents (torch.Tensor): Latents quantized (rounded) for the decoder.
+                - quantized_latents_decoder (torch.Tensor): Latents ready for the primary decoder (from STE).
                 - rate (torch.Tensor): Estimated bitrate (scalar tensor, sum over batch and dims).
-                - likelihoods (torch.Tensor): Likelihood values (for debugging/analysis).
         """
-        # 1. Quantize the latents using STE
-        #    We need the indices for potential entropy coding, the dequantized value for the decoder,
-        #    and the STE value for the gradient path.
-        indices, quantized_for_decoder, latents_ste = self.quantizer(latents) # Pass continuous latents
+        # 1. Get stable means and scales
+        means, scales = self._get_gaussian_params(means_pred, scales_pred_raw)
 
-        # 2. Calculate likelihoods
-        #    During training, use the continuous 'latents' with the noise approx CDF calculation.
-        #    During inference, use the rounded 'indices' with the CDF calculation.
-        if self.training:
-             likelihoods = self._likelihood(latents, means, scales) # Use continuous latents here
-        else:
-             likelihoods = self._likelihood(indices, means, scales) # Use indices here
+        # 2. Quantize using STE for training backward pass
+        indices, quantized_for_decoder, _ = self.quantizer(latents)
 
-        # 3. Calculate rate (-log2 likelihood)
-        rate = -torch.log2(likelihoods).sum() # Sum over all elements to get total bits for batch
+        # 3. Estimate likelihood using CDFs (noise approximation) on *continuous* latents
+        dist = Normal(means, scales)
+        upper = latents + 0.5
+        lower = latents - 0.5
+        cdf_upper = dist.cdf(upper)
+        cdf_lower = dist.cdf(lower)
+        likelihoods = torch.clamp(cdf_upper - cdf_lower, min=self.likelihood_bound)
 
-        # Normalize rate to bits per pixel (bpp) of the original image?
-        # Often done by dividing by batch size and number of pixels in original image
-        # rate = rate / (latents.shape[0] * num_pixels_in_original_image)
-        # For now, return total bits for the batch. Normalization happens in loss function.
-
-        # Return the values needed: quantized for decoder, rate, and likelihoods
-        # Note: We use 'quantized_for_decoder' which comes from rounding the noisy latent in training
-        # or rounding the original latent in inference.
-        return quantized_for_decoder, rate, likelihoods
-
-
-class FactorizedEntropyModel(nn.Module):
-    """
-    Entropy model for factorized priors (e.g., for hyper-latents).
-    Models each latent variable independently.
-    Here, we implement a simple version learning the range and assuming uniform dist.
-    A more complex version would learn parameters for a Gaussian/Laplace.
-    """
-    def __init__(self, num_latents):
-        super().__init__()
-        # Could learn parameters here, e.g., for a Gaussian
-        # self.mean = nn.Parameter(torch.zeros(num_latents))
-        # self.log_scale = nn.Parameter(torch.zeros(num_latents))
-        self.quantizer = QuantizerSTE.apply
-
-        # Simple approach: Assume uniform within a learned range (or fixed range)
-        # For simplicity, we won't learn parameters here, just calculate rate based on rounding.
-        # We assume the values will be quantized integers, and the decoder uses these integers.
-        # The rate estimation depends heavily on the assumed distribution.
-        # A common simple assumption is a standard Gaussian N(0,1) prior,
-        # which often works reasonably well if hyper-latents are normalized.
-
-    def _likelihood_uniform_approx(self, inputs):
-        # Crude approximation: Assume integers are roughly uniform over some range.
-        # Probability = 1 / (number of possible integer values)
-        # This isn't very accurate but avoids learning extra parameters.
-        # A better approach uses Gaussian/Laplace CDFs as in GaussianConditional.
-        # Let's use the Gaussian N(0,1) assumption as it's common.
-        dist = Normal(torch.zeros_like(inputs), torch.ones_like(inputs))
-        # Use STE noise approx for continuous inputs during training
-        if self.training:
-            upper = inputs + 0.5
-            lower = inputs - 0.5
-            cdf_upper = dist.cdf(upper)
-            cdf_lower = dist.cdf(lower)
-            likelihood_ = cdf_upper - cdf_lower
-        else: # Inference: use integer indices
-            upper = inputs + 0.5
-            lower = inputs - 0.5
-            cdf_upper = dist.cdf(upper)
-            cdf_lower = dist.cdf(lower)
-            likelihood_ = cdf_upper - cdf_lower
-
-        likelihood_ = torch.clamp(likelihood_, min=1e-9) # Bound likelihoods
-        return likelihood_
-
-
-    def forward(self, latents):
-        """
-        Quantizes hyper-latents and estimates their rate assuming a factorized prior.
-
-        Args:
-            latents (torch.Tensor): Continuous hyper-latent variables.
-
-        Returns:
-            tuple:
-                - quantized_latents (torch.Tensor): Quantized (rounded) hyper-latents.
-                - rate (torch.Tensor): Estimated bitrate (scalar tensor).
-        """
-        indices, quantized_for_decoder, latents_ste = self.quantizer(latents)
-
-        if self.training:
-             likelihoods = self._likelihood_uniform_approx(latents) # Use continuous
-        else:
-             likelihoods = self._likelihood_uniform_approx(indices) # Use indices
-
+        # 4. Calculate rate estimate
         rate = -torch.log2(likelihoods).sum()
 
         return quantized_for_decoder, rate
 
 
+    @torch.no_grad() # No gradients needed for compression/decompression logic
+    def compress(self, latents, means_pred, scales_pred_raw):
+        """
+        Prepares data for entropy encoding.
+
+        Args:
+            latents (torch.Tensor): Continuous latent variables.
+            means_pred (torch.Tensor): Predicted means.
+            scales_pred_raw (torch.Tensor): Predicted raw scales.
+
+        Returns:
+            tuple:
+                - indices (torch.Tensor): Quantized integer indices.
+                - cdf_lower (torch.Tensor): Lower CDF endpoints for entropy coder.
+                - cdf_upper (torch.Tensor): Upper CDF endpoints for entropy coder.
+        """
+        means, scales = self._get_gaussian_params(means_pred, scales_pred_raw)
+        # Quantize for real (rounding)
+        indices = torch.round(latents).short() # Use short for less memory if range allows
+        # Get CDFs based on the *integer indices*
+        cdf_lower, cdf_upper = self._get_cdf_endpoints(indices.float(), means, scales) # Need float for dist.cdf
+        return indices, cdf_lower, cdf_upper
+
+    @torch.no_grad()
+    def decompress(self, means_pred, scales_pred_raw, coder_backend):
+        """
+        Decodes indices from the bitstream using the provided entropy coder backend.
+
+        Args:
+            means_pred (torch.Tensor): Predicted means.
+            scales_pred_raw (torch.Tensor): Predicted raw scales.
+            coder_backend (constriction.stream.base.EntropyCoderBase): An initialized
+                                     Constriction entropy decoder (e.g., ANS or Range Coder).
+
+        Returns:
+            torch.Tensor: Dequantized latent variables (float tensor).
+        """
+        if constriction is None:
+            raise RuntimeError("Constriction library not found. Cannot decompress.")
+
+        means, scales = self._get_gaussian_params(means_pred, scales_pred_raw)
+
+        # Need shape information to decode the correct number of symbols
+        B, C, H, W = means.shape
+        flat_shape = (B * C * H * W,) # Total number of symbols
+
+        # Flatten parameters for symbol-by-symbol decoding
+        flat_means = means.reshape(flat_shape)
+        flat_scales = scales.reshape(flat_shape)
+
+        # Pre-allocate tensor for decoded symbols
+        decoded_indices_flat = torch.empty_like(flat_means, dtype=torch.short) # Decode as short integers
+
+        # Decode symbol by symbol (can be slow, batch decoding might be possible with some backends)
+        # print(f"Decoding {flat_shape[0]} symbols...") # Debug
+        for i in range(flat_shape[0]):
+            # Get distribution parameters for the current symbol
+            m, s = flat_means[i], flat_scales[i]
+            # Define the Quantized Gaussian distribution for the coder
+            # Need integer support range. Assume a reasonable range based on typical latent values.
+            # This needs careful consideration! Let's assume range [-32, 32] for now. Adapt as needed.
+            min_symbol = -32
+            max_symbol = 32
+            symbols = torch.arange(min_symbol, max_symbol + 1, device=means.device) # Possible integer values
+            cdf_lower, cdf_upper = self._get_cdf_endpoints(symbols.float(), m.expand_as(symbols), s.expand_as(symbols))
+            # Ensure PMF sums close to 1 (optional check)
+            # pmf = cdf_upper - cdf_lower
+            # print(f"Symbol {i} PMF sum: {pmf.sum()}")
+            # Decode one symbol using the calculated CDFs
+            decoded_symbol = coder_backend.decode_symbol(cdf_lower.cpu().numpy(), cdf_upper.cpu().numpy()) # Coder expects numpy CPU arrays
+            decoded_indices_flat[i] = decoded_symbol + min_symbol # Adjust index based on assumed min_symbol
+
+        # Reshape back to original latent shape
+        decoded_latents = decoded_indices_flat.reshape(B, C, H, W)
+
+        # Return as float tensor (dequantized)
+        return decoded_latents.float()
+
+
+class FactorizedEntropyModel(nn.Module):
+    """
+    Entropy model for factorized priors (e.g., hyper-latents).
+    MODIFIED for Constriction. Assumes N(0, 1) prior for simplicity.
+    """
+    def __init__(self, cdf_bound=1e-6):
+        super().__init__()
+        self.quantizer = QuantizerSTE.apply # For training
+        self.cdf_bound = cdf_bound
+        # Precompute N(0,1) distribution on the correct device (once)
+        self.register_buffer("prior_mean", torch.tensor(0.0))
+        self.register_buffer("prior_scale", torch.tensor(1.0))
+        # self.prior = Normal(torch.tensor(0.0), torch.tensor(1.0)) # This won't auto-move device
+
+
+    def _get_cdf_endpoints(self, inputs_quantized):
+        """ Calculates CDF values assuming a N(0,1) prior. """
+        # Ensure prior parameters are on the same device as input
+        prior = Normal(self.prior_mean.to(inputs_quantized.device),
+                       self.prior_scale.to(inputs_quantized.device))
+        upper = inputs_quantized + 0.5
+        lower = inputs_quantized - 0.5
+        cdf_upper = prior.cdf(upper)
+        cdf_lower = prior.cdf(lower)
+        cdf_upper = torch.clamp(cdf_upper, self.cdf_bound, 1.0 - self.cdf_bound)
+        cdf_lower = torch.clamp(cdf_lower, self.cdf_bound, 1.0 - self.cdf_bound)
+        # Ensure lower < upper
+        mask = cdf_lower >= cdf_upper
+        cdf_upper = torch.where(mask, cdf_lower + self.cdf_bound * 10, cdf_upper)
+        return cdf_lower, cdf_upper
+
+    def forward(self, latents):
+        """
+        Forward pass during TRAINING. Quantizes and calculates rate estimate.
+        """
+        indices, quantized_for_decoder, _ = self.quantizer(latents)
+        # Estimate likelihood using CDFs (noise approx) on *continuous* latents N(0,1)
+        prior = Normal(self.prior_mean.to(latents.device), self.prior_scale.to(latents.device))
+        upper = latents + 0.5; lower = latents - 0.5
+        likelihoods = torch.clamp(prior.cdf(upper) - prior.cdf(lower), min=1e-9) # Use likelihood_bound here
+        rate = -torch.log2(likelihoods).sum()
+        return quantized_for_decoder, rate
+
+    @torch.no_grad()
+    def compress(self, latents):
+        """ Prepares data for entropy encoding. """
+        indices = torch.round(latents).short()
+        cdf_lower, cdf_upper = self._get_cdf_endpoints(indices.float())
+        return indices, cdf_lower, cdf_upper
+
+    @torch.no_grad()
+    def decompress(self, shape, coder_backend):
+        """ Decodes indices assuming N(0,1) prior. """
+        if constriction is None: raise RuntimeError("Constriction library not found.")
+        B, C, H, W = shape
+        flat_shape = (B * C * H * W,)
+        device = self.prior_mean.device # Use device where prior is registered
+
+        decoded_indices_flat = torch.empty(flat_shape, dtype=torch.short, device=device)
+
+        # Define N(0,1) distribution once
+        # Assume same quantization range as before for symbol decoding
+        min_symbol = -32; max_symbol = 32
+        symbols = torch.arange(min_symbol, max_symbol + 1, device=device)
+        cdf_lower, cdf_upper = self._get_cdf_endpoints(symbols.float())
+        cdf_lower_np = cdf_lower.cpu().numpy(); cdf_upper_np = cdf_upper.cpu().numpy()
+
+        for i in range(flat_shape[0]):
+            decoded_symbol = coder_backend.decode_symbol(cdf_lower_np, cdf_upper_np)
+            decoded_indices_flat[i] = decoded_symbol + min_symbol
+
+        decoded_latents = decoded_indices_flat.reshape(B, C, H, W)
+        return decoded_latents.float()
+
+
 # ==============================================================================
 # Hyperprior Network
 # ==============================================================================
+
 
 class Hyperprior(nn.Module):
     """
@@ -426,70 +495,72 @@ class Hyperprior(nn.Module):
         self.latent_channels = latent_channels
         self.hyper_latent_channels = hyper_latent_channels
 
-        # Hyper-encoder: Latent -> Hyper-latent (often involves spatial downsampling)
-        # Use abs() before hyper-encoder as sign is often handled separately or implicitly
+        # --- CORRECTED INITIALIZATION ---
+        # Hyper-encoder: Latent -> Hyper-latent
         self.hyper_encoder = Encoder(
             input_channels=latent_channels,
-            base_channels=latent_channels // 2, # Adjust base channels if needed
+            base_channels=max(32, latent_channels // 2), # Ensure base_channels is reasonable
             latent_channels=hyper_latent_channels,
             num_downsample_layers=num_hyper_layers,
-            num_res_blocks=0 # Typically simpler than main encoder
+            num_res_blocks=0 # Simpler hyper network
         )
 
-        # Hyper-decoder: Hyper-latent -> Parameters (mean, scale) for main latent model
-        # Output channels = 2 * latent_channels (one set for mean, one for scale)
+        # Hyper-decoder: Hyper-latent -> Parameters (mean, scale)
+        # Calculate the base channels before upsampling starts in the decoder
+        # It should match the output channels of the hyper_encoder's downsampling part
+        hyper_encoder_output_channels = max(32, latent_channels // 2) * (2**num_hyper_layers)
+
         self.hyper_decoder = Decoder(
-            output_channels=latent_channels * 2,
-            base_channels=latent_channels // 2, # Match hyper-encoder intermediate channels
-            latent_channels=hyper_latent_channels,
+            output_channels=latent_channels * 2, # Means + Scales for main latents
+            # Use the calculated channel count from the encoder stage
+            # This assumes the decoder structure mirrors the encoder symmetrically
+            base_channels=hyper_encoder_output_channels, # Base channels before upsampling
+            latent_channels=hyper_latent_channels, # Input channels from hyper-latent space
             num_upsample_layers=num_hyper_layers,
-            num_res_blocks=0,
-            final_activation=None # Parameters are handled separately
+            num_res_blocks=0, # Simpler hyper network
+            final_activation=None
         )
+        # --- END CORRECTION ---
+
 
         # Entropy model for the hyper-latents (factorized prior)
-        self.hyper_latent_entropy_model = FactorizedEntropyModel(num_latents=hyper_latent_channels)
+        self.hyper_latent_entropy_model = FactorizedEntropyModel()
 
         # Main latent entropy model (conditional Gaussian)
         self.main_latent_entropy_model = GaussianConditionalEntropyModel()
 
-    def forward(self, latents):
-        """
-        Forward pass through the hyperprior network.
-
-        Args:
-            latents (torch.Tensor): Main latent variables from the primary encoder.
-
-        Returns:
-            tuple:
-                - quantized_latents_decoder (torch.Tensor): Main latents ready for the primary decoder.
-                - rate_main (torch.Tensor): Rate associated with the main latents.
-                - rate_hyper (torch.Tensor): Rate associated with the hyper-latents.
-        """
-        # 1. Encode main latents to hyper-latents
-        #    Often take abs() as input, assuming symmetry or handling sign differently
+    def forward(self, latents): # Training forward pass
+        # ... (forward implementation using self.hyper_encoder, etc.) ...
         hyper_latents = self.hyper_encoder(torch.abs(latents))
-
-        # 2. Quantize hyper-latents and estimate their rate
         quantized_hyper_latents, rate_hyper = self.hyper_latent_entropy_model(hyper_latents)
-
-        # 3. Decode quantized hyper-latents to get parameters for main latent model
         params = self.hyper_decoder(quantized_hyper_latents)
-        # Split params into mean and scale
-        # Ensure shapes match the main latents
-        means, scales_raw = torch.chunk(params, 2, dim=1) # Split along channel dimension
-
-        # Apply activation to scales to ensure positivity and stability
-        # Softplus or Exp + clamp are common. Let's use softplus here.
-        scales = F.softplus(scales_raw) # Ensures scales > 0
-        # Alternative: scales = torch.exp(scales_raw)
-        # scales = torch.clamp(scales, min=self.main_latent_entropy_model.scale_bound) # Clamp if using exp
-
-        # 4. Quantize main latents using the predicted parameters and estimate their rate
-        quantized_latents_decoder, rate_main, _ = self.main_latent_entropy_model(latents, means, scales)
-
+        means, scales_raw = torch.chunk(params, 2, dim=1)
+        quantized_latents_decoder, rate_main = self.main_latent_entropy_model(latents, means, scales_raw)
         return quantized_latents_decoder, rate_main, rate_hyper
 
+
+    @torch.no_grad()
+    def compress(self, latents):
+        # ... (compress implementation - should be correct if using updated entropy models) ...
+        hyper_latents = self.hyper_encoder(torch.abs(latents))
+        hyper_indices, hyper_cdf_lower, hyper_cdf_upper = self.hyper_latent_entropy_model.compress(hyper_latents)
+        params = self.hyper_decoder(hyper_indices.float())
+        means, scales_raw = torch.chunk(params, 2, dim=1)
+        main_indices, main_cdf_lower, main_cdf_upper = self.main_latent_entropy_model.compress(latents, means, scales_raw)
+        return {
+            "main": (main_indices, main_cdf_lower, main_cdf_upper),
+            "hyper": (hyper_indices, hyper_cdf_lower, hyper_cdf_upper)
+        }
+
+
+    @torch.no_grad()
+    def decompress(self, hyper_indices_shape, coder_hyper, coder_main):
+        # ... (decompress implementation - should be correct if using updated entropy models) ...
+        quantized_hyper_latents = self.hyper_latent_entropy_model.decompress(hyper_indices_shape, coder_hyper)
+        params = self.hyper_decoder(quantized_hyper_latents)
+        means, scales_raw = torch.chunk(params, 2, dim=1)
+        quantized_main_latents = self.main_latent_entropy_model.decompress(means, scales_raw, coder_main)
+        return quantized_main_latents
 # ==============================================================================
 # Motion Compensation & Warping
 # ==============================================================================

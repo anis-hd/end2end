@@ -1,5 +1,5 @@
-/final
-/flow
-/generated_flow
-/sequence
+final/
+flow/
+generated_flow/
+sequence/
 *.mp4

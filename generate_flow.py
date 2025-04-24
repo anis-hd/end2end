@@ -474,4 +474,4 @@ if __name__ == "__main__":
     config.frame_suffix = args.frame_suffix
 
     # Run the main generation process
-    generate_flow_for_sequences(config)
+    generate_flow_for_sequences(config) 
